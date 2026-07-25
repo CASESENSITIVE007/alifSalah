@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: each user reads/writes only their own profile.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Masjids: anyone signed in can read (needed for Nearby & Search).
+    // Only the imam who owns the space can create/update it, and the
+    // `verified` flag can only be changed from the Firebase console.
+    match /masjids/{masjidId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.imamUid == request.auth.uid
+        && request.resource.data.verified == false;
+      allow update: if request.auth != null
+        && resource.data.imamUid == request.auth.uid
+        && request.resource.data.imamUid == resource.data.imamUid
+        && request.resource.data.verified == resource.data.verified;
+
+      match /campaigns/{campaignId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/masjids/$(masjidId)).data.imamUid == request.auth.uid;
+      }
+
+      match /announcements/{announcementId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/masjids/$(masjidId)).data.imamUid == request.auth.uid;
+      }
+    }
+  }
+}
