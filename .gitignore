@@ -14,6 +14,7 @@ build/
 # Firebase secrets (regenerate with `flutterfire configure`)
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
 
 # OS
 Thumbs.db
