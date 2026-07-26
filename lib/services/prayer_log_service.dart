@@ -14,15 +14,11 @@ class PrayerLogService {
       .collection('prayerLog');
 
   /// Live map of dateKey → prayers-completed map, most recent year.
-  /// Uses a date-range filter on the document id (yyyy-MM-dd) so no
-  /// composite index is needed.
-  static Stream<Map<String, Map<String, bool>>> logStream() {
-    final yearAgo =
-        dateKey(DateTime.now().subtract(const Duration(days: 366)));
-    return _log
-        .where(FieldPath.documentId, isGreaterThanOrEqualTo: yearAgo)
-        .snapshots()
-        .map((snap) {
+  static Stream<Map<String, Map<String, bool>>> logStream() => _log
+          .orderBy(FieldPath.documentId, descending: true)
+          .limit(400)
+          .snapshots()
+          .map((snap) {
         final result = <String, Map<String, bool>>{};
         for (final doc in snap.docs) {
           final data = doc.data() as Map<String, dynamic>;
@@ -34,7 +30,6 @@ class PrayerLogService {
         }
         return result;
       });
-  }
 
   static Future<void> setPrayer(
       DateTime day, String prayer, bool done) async {
