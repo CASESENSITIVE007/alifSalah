@@ -18,11 +18,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  /// Kept across rebuilds (e.g. a language switch re-creates the tree)
-  /// so the user stays on the tab they were viewing.
-  static int _lastIndex = 0;
-
-  late int _index = _lastIndex;
+  int _index = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +34,11 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLang.t('nav_home')),
           NavigationDestination(
               icon: const Icon(Icons.near_me_outlined),
               selectedIcon: const Icon(Icons.near_me),

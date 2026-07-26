@@ -46,18 +46,6 @@ class _TrackerScreenState extends State<TrackerScreen>
       body: StreamBuilder<Map<String, Map<String, bool>>>(
         stream: PrayerLogService.logStream(),
         builder: (context, snap) {
-          if (snap.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  '${snap.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red, fontSize: 13),
-                ),
-              ),
-            );
-          }
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }

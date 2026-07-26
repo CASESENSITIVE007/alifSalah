@@ -31,6 +31,7 @@ class AppLang {
   static const Map<String, String> _en = {
     // Common
     'app_name': 'Alif-Salah',
+    'tagline': 'Your Masjid, in your pocket',
     'retry': 'Retry',
     'cancel': 'Cancel',
     'required': 'Required',
@@ -224,6 +225,7 @@ class AppLang {
   static const Map<String, String> _ur = {
     // Common
     'app_name': 'الف صلاح',
+    'tagline': 'آپ کی مسجد، آپ کی جیب میں',
     'retry': 'دوبارہ کوشش کریں',
     'cancel': 'منسوخ',
     'required': 'ضروری ہے',
