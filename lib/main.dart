@@ -23,24 +23,11 @@ class AlifSalahApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: AppLang.code,
-      builder: (context, langCode, _) => MaterialApp(
-        // Rebuilding under a new key re-creates every screen, so a language
-        // switch applies instantly across the whole app.
-        key: ValueKey(langCode),
-        title: 'Alif-Salah',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        locale: Locale(langCode),
-        supportedLocales: const [Locale('en'), Locale('ur')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: const AuthGate(),
-      ),
+    return MaterialApp(
+      title: 'Alif-Salah',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: const AuthGate(),
     );
   }
 }

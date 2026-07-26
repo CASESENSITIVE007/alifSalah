@@ -37,15 +37,8 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() {
-          _index = i;
-          _lastIndex = i;
-        }),
-        destinations: [
-          NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: AppLang.t('nav_home')),
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
           NavigationDestination(
               icon: const Icon(Icons.near_me_outlined),
               selectedIcon: const Icon(Icons.near_me),

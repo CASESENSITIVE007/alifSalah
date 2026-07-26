@@ -32,35 +32,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Card(
-            child: ValueListenableBuilder<String>(
-              valueListenable: AppLang.code,
-              builder: (context, langCode, _) => Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.language,
-                        color: AppTheme.deepGreen),
-                    title: Text(AppLang.t('language')),
-                  ),
-                  RadioGroup<String>(
-                    groupValue: langCode,
-                    onChanged: (v) {
-                      if (v != null) AppLang.set(v);
-                    },
-                    child: Column(
-                      children: [
-                        RadioListTile<String>(
-                            value: 'en', title: Text('English')),
-                        RadioListTile<String>(
-                            value: 'ur', title: Text('اردو')),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Card(
             child: SwitchListTile(
               secondary:
                   const Icon(Icons.notifications_active, color: AppTheme.gold),
@@ -101,9 +72,8 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Center(
-            child: Text(
-                '${AppLang.t('app_name')} v1.0',
+          const Center(
+            child: Text('Alif-Salah v1.0 — Phase 1\nYour Masjid, in your pocket',
                 textAlign: TextAlign.center,
                 style:
                     const TextStyle(color: Colors.black38, fontSize: 12)),
