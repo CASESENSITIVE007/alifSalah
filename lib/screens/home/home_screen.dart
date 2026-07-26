@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../services/notification_service.dart';
 import '../../theme.dart';
+import '../../widgets/date_banner.dart';
 import '../../widgets/timings_card.dart';
 import '../masjid/masjid_detail_screen.dart';
 import '../masjid/search_masjid_screen.dart';
 import '../imam/imam_dashboard_screen.dart';
+import '../tasbih/tasbih_screen.dart';
 
 /// Home dashboard: live Jamaat timings of the user's joined Masjids.
 /// Also (re)schedules Adhaan buzzer notifications whenever timings change —
@@ -22,9 +25,15 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Alif-Salah'),
         actions: [
+          IconButton(
+            tooltip: AppLang.t('tasbih'),
+            icon: const Icon(Icons.grain),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const TasbihScreen())),
+          ),
           if (profile.isImam)
             IconButton(
-              tooltip: 'Manage my Masjid',
+              tooltip: AppLang.t('manage_my_masjid'),
               icon: const Icon(Icons.admin_panel_settings),
               onPressed: () => Navigator.push(
                 context,
@@ -38,31 +47,39 @@ class HomeScreen extends StatelessWidget {
         onPressed: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const SearchMasjidScreen())),
         icon: const Icon(Icons.add),
-        label: const Text('Join a Masjid'),
+        label: Text(AppLang.t('join_a_masjid')),
       ),
-      body: profile.joinedMasjidIds.isEmpty
-          ? _emptyState(context)
-          : StreamBuilder<List<Masjid>>(
-              stream:
-                  MasjidService.joinedMasjidsStream(profile.joinedMasjidIds),
-              builder: (context, snap) {
-                if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final masjids = snap.data!;
-                // Keep Adhaan alerts in sync with the latest timetable.
-                NotificationService.rescheduleForMasjids(masjids,
-                    enabled: profile.adhaanAlertsEnabled);
+      body: Column(
+        children: [
+          const DateBanner(),
+          Expanded(
+            child: profile.joinedMasjidIds.isEmpty
+                ? _emptyState(context)
+                : StreamBuilder<List<Masjid>>(
+                    stream: MasjidService.joinedMasjidsStream(
+                        profile.joinedMasjidIds),
+                    builder: (context, snap) {
+                      if (!snap.hasData) {
+                        return const Center(
+                            child: CircularProgressIndicator());
+                      }
+                      final masjids = snap.data!;
+                      // Keep Adhaan alerts in sync with the latest timetable.
+                      NotificationService.rescheduleForMasjids(masjids,
+                          enabled: profile.adhaanAlertsEnabled);
 
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-                  children: [
-                    for (final masjid in masjids)
-                      _masjidCard(context, masjid),
-                  ],
-                );
-              },
-            ),
+                      return ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                        children: [
+                          for (final masjid in masjids)
+                            _masjidCard(context, masjid),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -101,18 +118,18 @@ class HomeScreen extends StatelessWidget {
                                 fontSize: 16)),
                         if (masjid.timingsUpdatedAt != null)
                           Text(
-                            'Updated ${_ago(masjid.timingsUpdatedAt!)}',
+                            '${AppLang.t('updated')} ${_ago(masjid.timingsUpdatedAt!)}',
                             style: const TextStyle(
                                 color: Colors.white70, fontSize: 11),
                           ),
                       ],
                     ),
                   ),
-                  if (!masjid.verified)
-                    const Tooltip(
-                      message: 'Pending verification',
-                      child:
-                          Icon(Icons.hourglass_top, color: AppTheme.gold, size: 18),
+                  if (masjid.verified)
+                    Tooltip(
+                      message: AppLang.t('verified_masjid'),
+                      child: const Icon(Icons.verified,
+                          color: AppTheme.gold, size: 18),
                     ),
                 ],
               ),
@@ -133,13 +150,14 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Icon(Icons.mosque, size: 64, color: Colors.black26),
             const SizedBox(height: 16),
-            const Text('No Masjid joined yet',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(AppLang.t('no_masjid_title'),
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            const Text(
-              'Join your local Masjid to see its Jamaat timings here and get Adhaan alerts. Or check the Nearby tab to view timings around you without joining.',
+            Text(
+              AppLang.t('no_masjid_body'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
+              style: const TextStyle(color: Colors.black54),
             ),
           ],
         ),

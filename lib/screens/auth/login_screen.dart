@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../services/auth_service.dart';
 import '../../theme.dart';
 
-/// Phone-number OTP login (Firebase Auth).
+/// Phone-number OTP login (Firebase Auth) with an English/Urdu switch.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _sendOtp() async {
     final phone = _phoneController.text.trim();
     if (phone.length < 7) {
-      setState(() => _error = 'Enter a valid phone number');
+      setState(() => _error = AppLang.t('invalid_phone'));
       return;
     }
     setState(() {
@@ -54,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // AuthGate reacts to the auth state change.
     } catch (e) {
       setState(() {
-        _error = 'Invalid code. Please try again.';
+        _error = AppLang.t('invalid_code');
         _busy = false;
       });
     }
@@ -65,96 +66,126 @@ class _LoginScreenState extends State<LoginScreen> {
     final awaitingOtp = _verificationId != null;
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 48),
-              const Icon(Icons.mosque, size: 80, color: AppTheme.deepGreen),
-              const SizedBox(height: 12),
-              const Text('Alif-Salah',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.deepGreen)),
-              const Text('Your Masjid, in your pocket',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54)),
-              const SizedBox(height: 48),
-              if (!awaitingOtp) ...[
-                Row(
+        child: Column(
+          children: [
+            Align(
+              alignment: AlignmentDirectional.topEnd,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.language, size: 18),
+                  label: Text(AppLang.isUrdu ? 'English' : 'اردو'),
+                  onPressed: () =>
+                      AppLang.set(AppLang.isUrdu ? 'en' : 'ur'),
+                ),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      width: 90,
-                      child: TextFormField(
-                        initialValue: _countryCode,
-                        onChanged: (v) => _countryCode = v.trim(),
-                        keyboardType: TextInputType.phone,
+                    const SizedBox(height: 24),
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset('assets/icon/app_icon.png',
+                            width: 120, height: 120, fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Alif-Salah',
                         textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.deepGreen)),
+                    Text(AppLang.t('tagline'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 48),
+                    if (!awaitingOtp) ...[
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: TextFormField(
+                              initialValue: _countryCode,
+                              onChanged: (v) => _countryCode = v.trim(),
+                              keyboardType: TextInputType.phone,
+                              textAlign: TextAlign.center,
+                              textDirection: TextDirection.ltr,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              textDirection: TextDirection.ltr,
+                              decoration: InputDecoration(
+                                  hintText: AppLang.t('phone_number')),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration:
-                            const InputDecoration(hintText: 'Phone number'),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: _busy ? null : _sendOtp,
+                        child: _busy
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Text(AppLang.t('send_otp')),
                       ),
-                    ),
+                    ] else ...[
+                      Text(
+                          '${AppLang.t('enter_code')}\n$_countryCode${_phoneController.text}',
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _otpController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        textDirection: TextDirection.ltr,
+                        maxLength: 6,
+                        style:
+                            const TextStyle(fontSize: 24, letterSpacing: 12),
+                        decoration: const InputDecoration(counterText: ''),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: _busy ? null : _verify,
+                        child: _busy
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Text(AppLang.t('verify_continue')),
+                      ),
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() => _verificationId = null),
+                        child: Text(AppLang.t('change_number')),
+                      ),
+                    ],
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(_error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.red)),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _busy ? null : _sendOtp,
-                  child: _busy
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Text('Send OTP'),
-                ),
-              ] else ...[
-                Text('Enter the 6-digit code sent to\n$_countryCode${_phoneController.text}',
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  maxLength: 6,
-                  style: const TextStyle(fontSize: 24, letterSpacing: 12),
-                  decoration: const InputDecoration(counterText: ''),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _busy ? null : _verify,
-                  child: _busy
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Text('Verify & Continue'),
-                ),
-                TextButton(
-                  onPressed:
-                      _busy ? null : () => setState(() => _verificationId = null),
-                  child: const Text('Change number'),
-                ),
-              ],
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(_error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red)),
-                ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

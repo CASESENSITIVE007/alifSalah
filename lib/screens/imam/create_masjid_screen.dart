@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../theme.dart';
@@ -20,6 +21,8 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
   final _name = TextEditingController();
   final _address = TextEditingController();
   final _city = TextEditingController();
+  final _muqtadiMin = TextEditingController();
+  final _muqtadiMax = TextEditingController();
   Position? _position;
   bool _busy = false;
   String? _error;
@@ -50,8 +53,7 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
   Future<void> _create() async {
     if (!_formKey.currentState!.validate()) return;
     if (_position == null) {
-      setState(() =>
-          _error = 'Capture the Masjid\'s location before creating the space.');
+      setState(() => _error = AppLang.t('capture_first'));
       return;
     }
     setState(() {
@@ -66,6 +68,8 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
         lat: _position!.latitude,
         lng: _position!.longitude,
         imamName: widget.profile.name,
+        muqtadiMin: int.parse(_muqtadiMin.text.trim()),
+        muqtadiMax: int.parse(_muqtadiMax.text.trim()),
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -79,7 +83,7 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Masjid space')),
+      appBar: AppBar(title: Text(AppLang.t('create_space_btn'))),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -88,26 +92,75 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
             TextFormField(
               controller: _name,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Masjid name'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
+              decoration:
+                  InputDecoration(labelText: AppLang.t('masjid_name')),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? AppLang.t('required')
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _address,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                  labelText: 'Address (street / colony)'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
+              decoration:
+                  InputDecoration(labelText: AppLang.t('address_label')),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? AppLang.t('required')
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _city,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'City'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
+              decoration: InputDecoration(labelText: AppLang.t('city')),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? AppLang.t('required')
+                  : null,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              AppLang.t('daily_muqtadis_q'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _muqtadiMin,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: AppLang.t('minimum')),
+                    validator: (v) {
+                      final n = int.tryParse(v?.trim() ?? '');
+                      if (n == null || n < 1) {
+                        return AppLang.t('enter_number');
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _muqtadiMax,
+                    keyboardType: TextInputType.number,
+                    decoration:
+                        InputDecoration(labelText: AppLang.t('maximum')),
+                    validator: (v) {
+                      final n = int.tryParse(v?.trim() ?? '');
+                      if (n == null || n < 1) {
+                        return AppLang.t('enter_number');
+                      }
+                      final min = int.tryParse(_muqtadiMin.text.trim());
+                      if (min != null && n < min) {
+                        return AppLang.t('gte_min');
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             Card(
@@ -117,14 +170,14 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
                   color: _position == null ? Colors.black38 : AppTheme.deepGreen,
                 ),
                 title: Text(_position == null
-                    ? 'Masjid location not captured'
-                    : 'Location captured ✓'),
+                    ? AppLang.t('location_not_captured')
+                    : AppLang.t('location_captured')),
                 subtitle: Text(_position == null
-                    ? 'Stand inside the Masjid and tap Capture. This powers the "Nearby Masjids" feature.'
+                    ? AppLang.t('capture_hint')
                     : '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}'),
                 trailing: TextButton(
                   onPressed: _busy ? null : _captureLocation,
-                  child: const Text('Capture'),
+                  child: Text(AppLang.t('capture')),
                 ),
               ),
             ),
@@ -144,13 +197,13 @@ class _CreateMasjidScreenState extends State<CreateMasjidScreen> {
                       width: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
-                  : const Text('Create Community Space'),
+                  : Text(AppLang.t('create_community_space')),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'New Masjid spaces are marked "pending verification" to prevent fraudulent listings. Verification is completed by the Alif-Salah team.',
+            Text(
+              AppLang.t('create_note'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.black45),
+              style: const TextStyle(fontSize: 12, color: Colors.black45),
             ),
           ],
         ),

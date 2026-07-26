@@ -72,6 +72,26 @@ class Masjid {
   final PrayerTimings timings;
   final DateTime? timingsUpdatedAt;
 
+  // --- Community verification (mechanism is intentionally hidden in UI) ---
+  /// Imam's estimate of daily muqtadi attendance, asked once at creation.
+  final int muqtadiMin;
+  final int muqtadiMax;
+
+  /// Members needed for the badge: 60% of the average of the range.
+  final int verifyThreshold;
+
+  /// Confirmations only count until this moment (72h after creation).
+  final DateTime? verifyDeadline;
+
+  /// Uids of members who confirmed this is their real Masjid.
+  final List<String> verifierUids;
+
+  /// Uids of everyone who joined this space (including the imam).
+  final List<String> memberUids;
+
+  /// When the space was created; drives the 24-hour no-muqtadi cleanup.
+  final DateTime? createdAt;
+
   const Masjid({
     required this.id,
     required this.name,
@@ -85,6 +105,13 @@ class Masjid {
     required this.verified,
     required this.timings,
     this.timingsUpdatedAt,
+    this.muqtadiMin = 0,
+    this.muqtadiMax = 0,
+    this.verifyThreshold = 0,
+    this.verifyDeadline,
+    this.verifierUids = const [],
+    this.memberUids = const [],
+    this.createdAt,
   });
 
   factory Masjid.fromDoc(DocumentSnapshot doc) {
@@ -103,6 +130,13 @@ class Masjid {
       timings:
           PrayerTimings.fromMap((d['timings'] as Map?)?.cast<String, dynamic>()),
       timingsUpdatedAt: (d['timingsUpdatedAt'] as Timestamp?)?.toDate(),
+      muqtadiMin: (d['muqtadiMin'] as num?)?.toInt() ?? 0,
+      muqtadiMax: (d['muqtadiMax'] as num?)?.toInt() ?? 0,
+      verifyThreshold: (d['verifyThreshold'] as num?)?.toInt() ?? 0,
+      verifyDeadline: (d['verifyDeadline'] as Timestamp?)?.toDate(),
+      verifierUids: (d['verifierUids'] as List?)?.cast<String>() ?? const [],
+      memberUids: (d['memberUids'] as List?)?.cast<String>() ?? const [],
+      createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -120,7 +154,42 @@ class Masjid {
         'verified': verified,
         'timings': timings.toMap(),
         'timingsUpdatedAt': FieldValue.serverTimestamp(),
+        'muqtadiMin': muqtadiMin,
+        'muqtadiMax': muqtadiMax,
+        'verifyThreshold': verifyThreshold,
+        if (verifyDeadline != null)
+          'verifyDeadline': Timestamp.fromDate(verifyDeadline!),
+        'verifierUids': verifierUids,
+        'memberUids': memberUids,
+        'createdAt': FieldValue.serverTimestamp(),
       };
+
+  /// Whether [uid] can still confirm this Masjid: joined members only,
+  /// once each, before the (hidden) deadline, while still unverified.
+  bool canBeVerifiedBy(String uid) =>
+      !verified &&
+      verifyDeadline != null &&
+      DateTime.now().isBefore(verifyDeadline!) &&
+      !verifierUids.contains(uid);
+
+  /// Muqtadis who joined, not counting the imam themself.
+  int get muqtadiCount => memberUids.where((u) => u != imamUid).length;
+
+  /// A space with zero muqtadis 24 hours after creation is expired:
+  /// hidden from everyone immediately and deleted when the imam next
+  /// opens their dashboard.
+  bool get isExpired =>
+      createdAt != null &&
+      muqtadiCount == 0 &&
+      DateTime.now().isAfter(createdAt!.add(const Duration(hours: 24)));
+}
+
+/// Computes the hidden verification threshold from the Imam's estimate:
+/// 60% of the average daily attendance, minimum 1.
+int verifyThresholdFor(int muqtadiMin, int muqtadiMax) {
+  final avg = (muqtadiMin + muqtadiMax) / 2;
+  final t = (avg * 0.6).ceil();
+  return t < 1 ? 1 : t;
 }
 
 enum UserRole { muqtadi, imam }

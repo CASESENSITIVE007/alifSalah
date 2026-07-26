@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/models.dart';
 
 /// Parses an "HH:mm" string into a DateTime today (local time).
@@ -68,9 +69,13 @@ NextPrayer? nextJamaat(PrayerTimings timings) {
 
 String countdownText(DateTime target) {
   final diff = target.difference(DateTime.now());
-  if (diff.isNegative) return 'now';
+  if (diff.isNegative) return AppLang.t('now');
   final h = diff.inHours;
   final m = diff.inMinutes % 60;
+  if (AppLang.isUrdu) {
+    if (h > 0) return '$h گھنٹے $m منٹ میں';
+    return '$m منٹ میں';
+  }
   if (h > 0) return 'in ${h}h ${m}m';
   return 'in ${m}m';
 }

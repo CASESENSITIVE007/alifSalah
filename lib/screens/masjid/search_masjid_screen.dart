@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../theme.dart';
@@ -36,7 +37,7 @@ class _SearchMasjidScreenState extends State<SearchMasjidScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Find your Masjid')),
+      appBar: AppBar(title: Text(AppLang.t('find_your_masjid'))),
       body: Column(
         children: [
           Padding(
@@ -46,7 +47,7 @@ class _SearchMasjidScreenState extends State<SearchMasjidScreen> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _search(),
               decoration: InputDecoration(
-                hintText: 'Masjid name or city…',
+                hintText: AppLang.t('search_hint'),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                     icon: const Icon(Icons.arrow_forward),
@@ -58,13 +59,15 @@ class _SearchMasjidScreenState extends State<SearchMasjidScreen> {
             child: _busy
                 ? const Center(child: CircularProgressIndicator())
                 : !_searched
-                    ? const Center(
-                        child: Text('Search for your local Masjid to join.',
-                            style: TextStyle(color: Colors.black54)))
+                    ? Center(
+                        child: Text(AppLang.t('search_prompt'),
+                            style:
+                                const TextStyle(color: Colors.black54)))
                     : _results.isEmpty
-                        ? const Center(
-                            child: Text('No Masjids found for that search.',
-                                style: TextStyle(color: Colors.black54)))
+                        ? Center(
+                            child: Text(AppLang.t('no_results'),
+                                style: const TextStyle(
+                                    color: Colors.black54)))
                         : ListView.builder(
                             itemCount: _results.length,
                             itemBuilder: (context, i) {

@@ -42,20 +42,24 @@ class _Splash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.mosque, size: 72, color: Color(0xFF1B5E20)),
-            SizedBox(height: 16),
-            Text('Alif-Salah',
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Image.asset('assets/icon/app_icon.png',
+                  width: 110, height: 110, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 16),
+            const Text('Alif-Salah',
                 style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B5E20))),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
           ],
         ),
       ),

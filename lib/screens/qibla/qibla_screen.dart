@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../theme.dart';
 import '../../utils/geo.dart';
 
@@ -38,7 +39,7 @@ class _QiblaScreenState extends State<QiblaScreen>
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        throw Exception('Location permission needed to compute Qibla.');
+        throw Exception(AppLang.t('qibla_location_needed'));
       }
       final pos = await Geolocator.getCurrentPosition();
       if (mounted) {
@@ -57,7 +58,7 @@ class _QiblaScreenState extends State<QiblaScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Qibla Compass')),
+      appBar: AppBar(title: Text(AppLang.t('qibla_compass'))),
       body: _error != null
           ? Center(
               child: Padding(
@@ -72,7 +73,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                           setState(() => _error = null);
                           _locate();
                         },
-                        child: const Text('Retry')),
+                        child: Text(AppLang.t('retry'))),
                   ],
                 ),
               ),
@@ -84,11 +85,11 @@ class _QiblaScreenState extends State<QiblaScreen>
                   builder: (context, snap) {
                     final heading = snap.data?.heading;
                     if (heading == null) {
-                      return const Center(
+                      return Center(
                         child: Padding(
-                          padding: EdgeInsets.all(32),
+                          padding: const EdgeInsets.all(32),
                           child: Text(
-                            'Compass sensor not available on this device.',
+                            AppLang.t('compass_unavailable'),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -112,7 +113,9 @@ class _QiblaScreenState extends State<QiblaScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            aligned ? 'Facing the Qibla ✓' : 'Rotate towards the arrow',
+            aligned
+                ? AppLang.t('facing_qibla')
+                : AppLang.t('rotate_arrow'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -185,17 +188,18 @@ class _QiblaScreenState extends State<QiblaScreen>
             ],
           ),
           const SizedBox(height: 32),
-          Text('Qibla: ${qibla.toStringAsFixed(1)}° from North',
+          Text(
+              '${AppLang.t('qibla_from_north')}: ${qibla.toStringAsFixed(1)}°',
               style: const TextStyle(color: Colors.black54)),
-          Text('Heading: ${heading.toStringAsFixed(0)}°',
+          Text('${AppLang.t('heading')}: ${heading.toStringAsFixed(0)}°',
               style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 48),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Text(
-              'Hold your phone flat and away from magnets for best accuracy.',
+              AppLang.t('compass_tip'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.black38),
+              style: const TextStyle(fontSize: 12, color: Colors.black38),
             ),
           ),
         ],

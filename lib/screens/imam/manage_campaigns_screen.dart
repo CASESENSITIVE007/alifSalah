@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../theme.dart';
@@ -21,10 +22,10 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fundraising campaigns')),
+      appBar: AppBar(title: Text(AppLang.t('campaigns_admin'))),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('New campaign'),
+        label: Text(AppLang.t('new_campaign')),
         onPressed: () => _showCreateSheet(context),
       ),
       body: StreamBuilder<List<Campaign>>(
@@ -32,10 +33,10 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
         builder: (context, snap) {
           final items = snap.data ?? [];
           if (items.isEmpty) {
-            return const Center(
-              child: Text('No active campaigns.\nCreate one to start collecting donations.',
+            return Center(
+              child: Text(AppLang.t('no_campaigns_admin'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54)),
+                  style: const TextStyle(color: Colors.black54)),
             );
           }
           return ListView(
@@ -67,7 +68,7 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton.icon(
                             icon: const Icon(Icons.close, size: 18),
-                            label: const Text('Close campaign'),
+                            label: Text(AppLang.t('close_campaign')),
                             style: TextButton.styleFrom(
                                 foregroundColor: Colors.red),
                             onPressed: () => MasjidService.closeCampaign(
@@ -106,20 +107,21 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('New fundraising campaign',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(AppLang.t('new_campaign_title'),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               TextField(
                 controller: title,
-                decoration: const InputDecoration(
-                    labelText: 'Title (e.g. Masjid expansion fund)'),
+                decoration: InputDecoration(
+                    labelText: AppLang.t('campaign_title_hint')),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: description,
                 maxLines: 2,
-                decoration:
-                    const InputDecoration(labelText: 'Description (optional)'),
+                decoration: InputDecoration(
+                    labelText: AppLang.t('description_opt')),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -127,8 +129,8 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
                     qrBase64 == null ? Icons.qr_code : Icons.check_circle,
                     color: qrBase64 == null ? null : AppTheme.deepGreen),
                 label: Text(qrBase64 == null
-                    ? 'Upload payment QR code image'
-                    : 'QR code attached ✓'),
+                    ? AppLang.t('upload_qr')
+                    : AppLang.t('qr_attached')),
                 onPressed: () async {
                   final picker = ImagePicker();
                   final file = await picker.pickImage(
@@ -173,7 +175,7 @@ class _ManageCampaignsScreenState extends State<ManageCampaignsScreen> {
                           Navigator.pop(sheetContext);
                         }
                       },
-                child: const Text('Launch campaign'),
+                child: Text(AppLang.t('launch_campaign')),
               ),
             ],
           ),

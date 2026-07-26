@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:alif_salah/models/models.dart';
 import 'package:alif_salah/utils/geo.dart';
 import 'package:alif_salah/utils/prayer_utils.dart';
+import 'package:alif_salah/utils/streak.dart';
 
 void main() {
   test('geohash encodes known location', () {
@@ -32,6 +33,40 @@ void main() {
     expect(restored['Fajr'].jamaat, '05:20');
     expect(restored['Isha'].adhaan, '20:00');
     expect(restored['Asr'].isEmpty, true);
+  });
+
+  test('verification threshold is 60% of average attendance', () {
+    expect(verifyThresholdFor(20, 50), 21); // avg 35 → 60% = 21
+    expect(verifyThresholdFor(10, 10), 6); // avg 10 → 60% = 6
+    expect(verifyThresholdFor(1, 1), 1); // never below 1
+    expect(verifyThresholdFor(5, 6), 4); // avg 5.5 → 3.3 → ceil 4
+  });
+
+  test('streak counts consecutive complete days', () {
+    final today = DateTime(2026, 7, 26);
+    final counts = {
+      '2026-07-26': 5, // today complete
+      '2026-07-25': 5,
+      '2026-07-24': 5,
+      '2026-07-22': 5, // gap on the 23rd
+      '2026-07-21': 3, // partial — breaks
+    };
+    final stats = computeStreaks(counts, today);
+    expect(stats.currentStreak, 3);
+    expect(stats.bestStreak, 3);
+    expect(stats.completeDays, 4);
+    expect(stats.totalPrayers, 23);
+  });
+
+  test('streak survives an in-progress today', () {
+    final today = DateTime(2026, 7, 26);
+    final counts = {
+      '2026-07-26': 2, // today not finished yet
+      '2026-07-25': 5,
+      '2026-07-24': 5,
+    };
+    final stats = computeStreaks(counts, today);
+    expect(stats.currentStreak, 2); // yesterday's streak still alive
   });
 
   test('formatTime12 formats correctly', () {
