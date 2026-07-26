@@ -63,6 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuilds instantly when the language toggles.
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLang.code,
+      builder: (context, langCode, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final awaitingOtp = _verificationId != null;
     return Scaffold(
       body: SafeArea(
@@ -101,34 +109,35 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.deepGreen)),
-                    Text(AppLang.t('tagline'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 48),
                     if (!awaitingOtp) ...[
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 90,
-                            child: TextFormField(
-                              initialValue: _countryCode,
-                              onChanged: (v) => _countryCode = v.trim(),
-                              keyboardType: TextInputType.phone,
-                              textAlign: TextAlign.center,
-                              textDirection: TextDirection.ltr,
+                      // Phone entry is always left-to-right, even in Urdu:
+                      // numbers read LTR and the +code stays on the left.
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 90,
+                              child: TextFormField(
+                                initialValue: _countryCode,
+                                onChanged: (v) => _countryCode = v.trim(),
+                                keyboardType: TextInputType.phone,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              textDirection: TextDirection.ltr,
-                              decoration: InputDecoration(
-                                  hintText: AppLang.t('phone_number')),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                textAlign: TextAlign.left,
+                                decoration: InputDecoration(
+                                    hintText: AppLang.t('phone_number')),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
                       FilledButton(
@@ -146,15 +155,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           '${AppLang.t('enter_code')}\n$_countryCode${_phoneController.text}',
                           textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
+                      Directionality(
                         textDirection: TextDirection.ltr,
-                        maxLength: 6,
-                        style:
-                            const TextStyle(fontSize: 24, letterSpacing: 12),
-                        decoration: const InputDecoration(counterText: ''),
+                        child: TextField(
+                          controller: _otpController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          maxLength: 6,
+                          style: const TextStyle(
+                              fontSize: 24, letterSpacing: 12),
+                          decoration:
+                              const InputDecoration(counterText: ''),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       FilledButton(

@@ -26,6 +26,9 @@ class AlifSalahApp extends StatelessWidget {
     return ValueListenableBuilder<String>(
       valueListenable: AppLang.code,
       builder: (context, langCode, _) => MaterialApp(
+        // Rebuilding under a new key re-creates every screen, so a language
+        // switch applies instantly across the whole app.
+        key: ValueKey(langCode),
         title: 'Alif-Salah',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
