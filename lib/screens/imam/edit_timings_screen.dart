@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../theme.dart';
@@ -45,8 +46,8 @@ class _EditTimingsScreenState extends State<EditTimingsScreen> {
     await MasjidService.updateTimings(
         widget.masjid.id, PrayerTimings(_times));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Timings published to your community ✓')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLang.t('timings_published'))));
       Navigator.pop(context);
     }
   }
@@ -54,13 +55,13 @@ class _EditTimingsScreenState extends State<EditTimingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Update Jamaat timings')),
+      appBar: AppBar(title: Text(AppLang.t('update_timings'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Tap a time to change it. Jumu\'ah replaces Dhuhr on Fridays.',
-            style: TextStyle(color: Colors.black54),
+          Text(
+            AppLang.t('edit_timings_tip'),
+            style: const TextStyle(color: Colors.black54),
           ),
           const SizedBox(height: 12),
           for (final prayer in kPrayerNames) _prayerRow(prayer),
@@ -73,7 +74,7 @@ class _EditTimingsScreenState extends State<EditTimingsScreen> {
                     width: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Text('Publish timings'),
+                : Text(AppLang.t('publish_timings')),
           ),
         ],
       ),
@@ -89,13 +90,15 @@ class _EditTimingsScreenState extends State<EditTimingsScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Text(prayer,
+              child: Text(AppLang.prayer(prayer),
                   style: const TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 15)),
             ),
-            _timeChip('Adhaan', pt.adhaan, () => _pick(prayer, false)),
+            _timeChip(
+                AppLang.t('adhaan'), pt.adhaan, () => _pick(prayer, false)),
             const SizedBox(width: 8),
-            _timeChip('Jamaat', pt.jamaat, () => _pick(prayer, true)),
+            _timeChip(
+                AppLang.t('jamaat'), pt.jamaat, () => _pick(prayer, true)),
           ],
         ),
       ),
@@ -119,7 +122,7 @@ class _EditTimingsScreenState extends State<EditTimingsScreen> {
             Text(label,
                 style: const TextStyle(fontSize: 10, color: Colors.black54)),
             Text(
-              value == null ? 'Set' : formatTime12(value),
+              value == null ? AppLang.t('set') : formatTime12(value),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,

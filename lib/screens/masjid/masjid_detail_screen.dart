@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/auth_service.dart';
 import '../../services/masjid_service.dart';
@@ -58,20 +59,17 @@ class MasjidDetailScreen extends StatelessWidget {
                               fontSize: 20, fontWeight: FontWeight.bold)),
                     ),
                     if (masjid.verified)
-                      const Icon(Icons.verified,
-                          color: AppTheme.deepGreen, size: 20)
-                    else
-                      const Tooltip(
-                        message: 'Pending verification',
-                        child: Icon(Icons.hourglass_top,
-                            color: AppTheme.gold, size: 20),
+                      Tooltip(
+                        message: AppLang.t('verified_masjid'),
+                        child: const Icon(Icons.verified,
+                            color: AppTheme.gold, size: 22),
                       ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text('${masjid.address}, ${masjid.city}',
                     style: const TextStyle(color: Colors.black54)),
-                Text('Imam: ${masjid.imamName}',
+                Text('${AppLang.t('imam_label')}: ${masjid.imamName}',
                     style: const TextStyle(color: Colors.black54)),
                 const SizedBox(height: 12),
                 if (user != null)
@@ -85,8 +83,8 @@ class MasjidDetailScreen extends StatelessWidget {
                           )
                         : null,
                     label: Text(joined
-                        ? 'Joined — Adhaan alerts on'
-                        : 'Join this Masjid'),
+                        ? AppLang.t('joined_alerts_on')
+                        : AppLang.t('join_this_masjid')),
                     onPressed: () => joined
                         ? _confirmLeave(context, masjid)
                         : MasjidService.joinMasjid(masjid.id),
@@ -95,25 +93,72 @@ class MasjidDetailScreen extends StatelessWidget {
             ),
           ),
         ),
+        // Silent community verification: joined members simply confirm they
+        // pray here. Thresholds and deadlines are never shown to anyone.
+        if (user != null &&
+            joined &&
+            user.uid != masjid.imamUid &&
+            masjid.canBeVerifiedBy(user.uid)) ...[
+          const SizedBox(height: 12),
+          Card(
+            color: AppTheme.lightGreen,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppLang.t('pray_here_q'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15)),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLang.t('pray_here_body'),
+                    style: const TextStyle(
+                        fontSize: 13, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.how_to_reg, size: 18),
+                      label: Text(AppLang.t('yes_i_pray_here')),
+                      onPressed: () async {
+                        await MasjidService.verifyMasjid(masjid);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(AppLang.t(
+                                      'confirmation_recorded'))));
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
-        const Text('Jamaat Timings',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppLang.t('jamaat_timings'),
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Card(child: TimingsCard(timings: masjid.timings)),
         const SizedBox(height: 16),
-        const Text('Announcements',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppLang.t('announcements'),
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         StreamBuilder<List<Announcement>>(
           stream: MasjidService.announcementsStream(masjid.id),
           builder: (context, snap) {
             final items = snap.data ?? [];
             if (items.isEmpty) {
-              return const Card(
+              return Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No announcements yet.',
-                      style: TextStyle(color: Colors.black54)),
+                  padding: const EdgeInsets.all(16),
+                  child: Text(AppLang.t('no_announcements'),
+                      style: const TextStyle(color: Colors.black54)),
                 ),
               );
             }
@@ -135,19 +180,20 @@ class MasjidDetailScreen extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        const Text('Fundraising Campaigns',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppLang.t('campaigns'),
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         StreamBuilder<List<Campaign>>(
           stream: MasjidService.campaignsStream(masjid.id),
           builder: (context, snap) {
             final items = snap.data ?? [];
             if (items.isEmpty) {
-              return const Card(
+              return Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No active campaigns.',
-                      style: TextStyle(color: Colors.black54)),
+                  padding: const EdgeInsets.all(16),
+                  child: Text(AppLang.t('no_campaigns'),
+                      style: const TextStyle(color: Colors.black54)),
                 ),
               );
             }
@@ -202,9 +248,10 @@ class MasjidDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Scan with your payment app to donate',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    Text(
+                      AppLang.t('scan_to_donate'),
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black54),
                     ),
                   ],
                 ),
@@ -220,16 +267,15 @@ class MasjidDetailScreen extends StatelessWidget {
     final leave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Leave ${masjid.name}?'),
-        content: const Text(
-            'You will stop receiving Adhaan alerts for this Masjid.'),
+        title: Text('${AppLang.t('leave_q')} (${masjid.name})'),
+        content: Text(AppLang.t('leave_body')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(AppLang.t('cancel'))),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Leave')),
+              child: Text(AppLang.t('leave'))),
         ],
       ),
     );

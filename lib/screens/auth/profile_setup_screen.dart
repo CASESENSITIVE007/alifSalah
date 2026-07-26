@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/auth_service.dart';
 import '../../theme.dart';
@@ -28,7 +29,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Set up your profile')),
+      appBar: AppBar(title: Text(AppLang.t('setup_profile'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -37,25 +38,24 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             TextField(
               controller: _nameController,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Your full name'),
+              decoration: InputDecoration(labelText: AppLang.t('full_name')),
             ),
             const SizedBox(height: 24),
-            const Text('I am a…',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLang.t('i_am'),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 16)),
             const SizedBox(height: 8),
             _roleCard(
               role: UserRole.muqtadi,
-              title: 'Community Member (Muqtadi)',
-              subtitle:
-                  'Join Masjid spaces, see Jamaat timings, get Adhaan alerts, use the Qibla compass, and donate via QR.',
+              title: AppLang.t('role_muqtadi'),
+              subtitle: AppLang.t('role_muqtadi_desc'),
               icon: Icons.person,
             ),
             const SizedBox(height: 12),
             _roleCard(
               role: UserRole.imam,
-              title: 'Imam / Masjid Administrator',
-              subtitle:
-                  'Create and manage your Masjid\'s space, publish Jamaat timings, and run fundraising campaigns. Your Masjid will be marked "pending verification" until approved.',
+              title: AppLang.t('role_imam'),
+              subtitle: AppLang.t('role_imam_desc'),
               icon: Icons.admin_panel_settings,
             ),
             const SizedBox(height: 32),
@@ -67,7 +67,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       width: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
-                  : const Text('Continue'),
+                  : Text(AppLang.t('continue')),
             ),
           ],
         ),

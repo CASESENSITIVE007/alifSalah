@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/models.dart';
 import '../theme.dart';
 import '../utils/prayer_utils.dart';
@@ -20,12 +21,15 @@ class TimingsCard extends StatelessWidget {
         .toList();
 
     if (rows.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('Timings not published yet.',
-            style: TextStyle(color: Colors.black54)),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(AppLang.t('not_published'),
+            style: const TextStyle(color: Colors.black54)),
       );
     }
+
+    const headerStyle = TextStyle(
+        fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black45);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -34,29 +38,17 @@ class TimingsCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                   flex: 3,
-                  child: Text('Prayer',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black45))),
+                  child: Text(AppLang.t('prayer_col'), style: headerStyle)),
               Expanded(
                   flex: 2,
-                  child: Text('Adhaan',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black45))),
+                  child: Text(AppLang.t('adhaan'),
+                      textAlign: TextAlign.center, style: headerStyle)),
               Expanded(
                   flex: 2,
-                  child: Text('Jamaat',
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black45))),
+                  child: Text(AppLang.t('jamaat'),
+                      textAlign: TextAlign.end, style: headerStyle)),
             ],
           ),
         ),
@@ -74,10 +66,12 @@ class TimingsCard extends StatelessWidget {
               children: [
                 const Icon(Icons.schedule, size: 16, color: AppTheme.deepGreen),
                 const SizedBox(width: 6),
-                Text(
-                  'Next Jamaat: ${next.name} ${countdownText(next.jamaatTime)}',
-                  style: const TextStyle(
-                      color: AppTheme.deepGreen, fontWeight: FontWeight.w600),
+                Flexible(
+                  child: Text(
+                    '${AppLang.t('next_jamaat')}: ${AppLang.prayer(next.name)} ${countdownText(next.jamaatTime)}',
+                    style: const TextStyle(
+                        color: AppTheme.deepGreen, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
@@ -98,7 +92,7 @@ class TimingsCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Expanded(flex: 3, child: Text(prayer, style: style)),
+          Expanded(flex: 3, child: Text(AppLang.prayer(prayer), style: style)),
           Expanded(
               flex: 2,
               child: Text(formatTime12(pt.adhaan),

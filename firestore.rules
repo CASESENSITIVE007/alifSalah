@@ -3,22 +3,87 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Users: each user reads/writes only their own profile.
-    match /users/{uid} {
+    match /users/{uid} { 
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Personal prayer streak log — private to the user.
+      match /prayerLog/{day} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // Masjids: anyone signed in can read (needed for Nearby & Search).
-    // Only the imam who owns the space can create/update it, and the
-    // `verified` flag can only be changed from the Firebase console.
+    // The Verified badge is earned through silent community confirmation:
+    // joined muqtadis each confirm once; the badge flips only when the
+    // hidden threshold is met before the 72-hour deadline. These rules
+    // make that impossible to fake, even calling Firestore directly.
     match /masjids/{masjidId} {
       allow read: if request.auth != null;
+
       allow create: if request.auth != null
         && request.resource.data.imamUid == request.auth.uid
-        && request.resource.data.verified == false;
+        && request.resource.data.verified == false
+        && request.resource.data.verifierUids == []
+        && request.resource.data.memberUids == []
+        && request.resource.data.verifyThreshold is int
+        && request.resource.data.verifyThreshold >= 1;
+
+      // Imam manages content but can never touch the verification or
+      // membership fields.
       allow update: if request.auth != null
         && resource.data.imamUid == request.auth.uid
         && request.resource.data.imamUid == resource.data.imamUid
-        && request.resource.data.verified == resource.data.verified;
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['verified', 'verifierUids', 'verifyThreshold', 'verifyDeadline', 'memberUids']);
+
+      // Membership: any signed-in user may add or remove exactly their
+      // own uid in memberUids (join / leave).
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['memberUids'])
+        && (
+          ( // joining
+            request.auth.uid in request.resource.data.memberUids
+            && !(request.auth.uid in resource.data.memberUids)
+            && request.resource.data.memberUids.size() == resource.data.memberUids.size() + 1
+            && request.resource.data.memberUids.hasAll(resource.data.memberUids)
+          ) || ( // leaving
+            !(request.auth.uid in request.resource.data.memberUids)
+            && request.auth.uid in resource.data.memberUids
+            && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
+            && resource.data.memberUids.hasAll(request.resource.data.memberUids)
+          )
+        );
+
+      // Deletion: the imam can delete their own space; additionally any
+      // client may clean up an expired space (24h old with no muqtadis —
+      // memberUids holds at most the imam).
+      allow delete: if request.auth != null
+        && (
+          resource.data.imamUid == request.auth.uid
+          || (
+            resource.data.createdAt != null
+            && request.time > resource.data.createdAt + duration.value(24, 'h')
+            && resource.data.memberUids.size() <= 1
+          )
+        );
+
+      // Community confirmation: a joined member adds their own uid exactly
+      // once; `verified` may only become true when the threshold is met
+      // within the deadline, in the same write.
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['verified', 'verifierUids'])
+        && get(/databases/$(database)/documents/users/$(request.auth.uid))
+            .data.joinedMasjidIds.hasAny([masjidId])
+        && !(request.auth.uid in resource.data.verifierUids)
+        && request.auth.uid in request.resource.data.verifierUids
+        && request.resource.data.verifierUids.hasAll(resource.data.verifierUids)
+        && request.resource.data.verifierUids.size() == resource.data.verifierUids.size() + 1
+        && (request.resource.data.verified == resource.data.verified
+            || (request.resource.data.verified == true
+                && request.resource.data.verifierUids.size() >= resource.data.verifyThreshold
+                && request.time < resource.data.verifyDeadline));
 
       match /campaigns/{campaignId} {
         allow read: if request.auth != null;

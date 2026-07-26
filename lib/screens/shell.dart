@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/models.dart';
 import 'home/home_screen.dart';
 import 'nearby/nearby_screen.dart';
 import 'profile/profile_screen.dart';
 import 'qibla/qibla_screen.dart';
+import 'tracker/tracker_screen.dart';
 
 /// Main app shell with bottom navigation.
 class AppShell extends StatefulWidget {
@@ -24,6 +26,7 @@ class _AppShellState extends State<AppShell> {
       HomeScreen(profile: widget.profile),
       const NearbyScreen(),
       const QiblaScreen(),
+      const TrackerScreen(),
       ProfileScreen(profile: widget.profile),
     ];
     return Scaffold(
@@ -31,23 +34,27 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home'),
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLang.t('nav_home')),
           NavigationDestination(
-              icon: Icon(Icons.near_me_outlined),
-              selectedIcon: Icon(Icons.near_me),
-              label: 'Nearby'),
+              icon: const Icon(Icons.near_me_outlined),
+              selectedIcon: const Icon(Icons.near_me),
+              label: AppLang.t('nav_nearby')),
           NavigationDestination(
-              icon: Icon(Icons.explore_outlined),
-              selectedIcon: Icon(Icons.explore),
-              label: 'Qibla'),
+              icon: const Icon(Icons.explore_outlined),
+              selectedIcon: const Icon(Icons.explore),
+              label: AppLang.t('nav_qibla')),
           NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile'),
+              icon: const Icon(Icons.calendar_month_outlined),
+              selectedIcon: const Icon(Icons.calendar_month),
+              label: AppLang.t('nav_tracker')),
+          NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: AppLang.t('nav_profile')),
         ],
       ),
     );

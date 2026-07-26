@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 import '../../theme.dart';
@@ -17,7 +18,7 @@ class ImamDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage my Masjid')),
+      appBar: AppBar(title: Text(AppLang.t('imam_dashboard'))),
       body: StreamBuilder<Masjid?>(
         stream: MasjidService.myAdministeredMasjid(profile.uid),
         builder: (context, snap) {
@@ -26,31 +27,70 @@ class ImamDashboardScreen extends StatelessWidget {
           }
           final masjid = snap.data;
           if (masjid == null) return _noMasjid(context);
+
+          // 24 hours with zero muqtadis: the space is removed. The imam's
+          // account stays — they land back on "Create your Masjid space".
+          if (masjid.isExpired) {
+            MasjidService.deleteExpiredMasjid(masjid);
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.delete_forever,
+                        size: 56, color: Colors.red),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppLang.t('space_deleted'),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (masjid.muqtadiCount == 0)
+                Card(
+                  color: const Color(0xFFFDECEA),
+                  child: ListTile(
+                    leading:
+                        const Icon(Icons.warning_amber, color: Colors.red),
+                    title: Text(
+                      AppLang.t('warn_join_now'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, color: Colors.red),
+                    ),
+                    subtitle: Text(AppLang.t('warn_join_now_body')),
+                  ),
+                ),
               Card(
                 color: masjid.verified ? AppTheme.lightGreen : null,
                 child: ListTile(
                   leading: Icon(
-                    masjid.verified ? Icons.verified : Icons.hourglass_top,
+                    masjid.verified ? Icons.verified : Icons.groups,
                     color:
-                        masjid.verified ? AppTheme.deepGreen : AppTheme.gold,
+                        masjid.verified ? AppTheme.gold : Colors.black38,
                   ),
                   title: Text(masjid.name,
                       style: const TextStyle(fontWeight: FontWeight.w700)),
+                  // The community-confirmation mechanism is intentionally
+                  // never explained — this is all the imam ever sees.
                   subtitle: Text(masjid.verified
-                      ? 'Verified Masjid'
-                      : 'Pending verification — your space is visible, and will show a verified badge once approved.'),
+                      ? AppLang.t('verified_masjid')
+                      : AppLang.t('need_muqtadis')),
                 ),
               ),
               const SizedBox(height: 12),
               _actionCard(
                 context,
                 icon: Icons.schedule,
-                title: 'Update Jamaat timings',
-                subtitle:
-                    'Publish today\'s Adhaan & Jamaat times. Members see changes instantly.',
+                title: AppLang.t('update_timings'),
+                subtitle: AppLang.t('update_timings_desc'),
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -59,9 +99,8 @@ class ImamDashboardScreen extends StatelessWidget {
               _actionCard(
                 context,
                 icon: Icons.campaign,
-                title: 'Post an announcement',
-                subtitle:
-                    'One-way broadcast to your community. No replies, no noise.',
+                title: AppLang.t('post_announcement'),
+                subtitle: AppLang.t('post_announcement_desc'),
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -71,9 +110,8 @@ class ImamDashboardScreen extends StatelessWidget {
               _actionCard(
                 context,
                 icon: Icons.volunteer_activism,
-                title: 'Fundraising campaigns',
-                subtitle:
-                    'Start a campaign and upload your Masjid\'s payment QR code.',
+                title: AppLang.t('campaigns_admin'),
+                subtitle: AppLang.t('campaigns_admin_desc'),
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -96,19 +134,20 @@ class ImamDashboardScreen extends StatelessWidget {
           children: [
             const Icon(Icons.add_business, size: 64, color: Colors.black26),
             const SizedBox(height: 16),
-            const Text('Create your Masjid\'s Community Space',
+            Text(AppLang.t('create_space_title'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text(
-              'Set up your Masjid so your community can join, see live Jamaat timings, and receive Adhaan alerts.',
+            Text(
+              AppLang.t('create_space_body'),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
+              style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text('Create Masjid space'),
+              label: Text(AppLang.t('create_space_btn')),
               onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(

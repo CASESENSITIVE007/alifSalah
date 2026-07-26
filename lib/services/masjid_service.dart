@@ -29,7 +29,10 @@ class MasjidService {
     return _masjids
         .where(FieldPath.documentId, whereIn: ids.take(30).toList())
         .snapshots()
-        .map((snap) => snap.docs.map(Masjid.fromDoc).toList());
+        .map((snap) => snap.docs
+            .map(Masjid.fromDoc)
+            .where((m) => !m.isExpired)
+            .toList());
   }
 
   static Stream<Masjid?> myAdministeredMasjid(String imamUid) => _masjids
@@ -52,7 +55,10 @@ class MasjidService {
     final seen = <String>{};
     final results = <Masjid>[];
     for (final doc in [...byName.docs, ...byCity.docs]) {
-      if (seen.add(doc.id)) results.add(Masjid.fromDoc(doc));
+      if (seen.add(doc.id)) {
+        final masjid = Masjid.fromDoc(doc);
+        if (!masjid.isExpired) results.add(masjid);
+      }
     }
     return results;
   }
@@ -79,6 +85,7 @@ class MasjidService {
       for (final doc in snap.docs) {
         if (!seen.add(doc.id)) continue;
         final masjid = Masjid.fromDoc(doc);
+        if (masjid.isExpired) continue;
         final dist = distanceMeters(lat, lng, masjid.lat, masjid.lng);
         if (dist <= radiusM) results.add(NearbyMasjid(masjid, dist));
       }
@@ -91,15 +98,38 @@ class MasjidService {
 
   static Future<void> joinMasjid(String masjidId) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    await _db.collection('users').doc(uid).update({
+    final batch = _db.batch();
+    batch.update(_db.collection('users').doc(uid), {
       'joinedMasjidIds': FieldValue.arrayUnion([masjidId]),
     });
+    batch.update(_masjids.doc(masjidId), {
+      'memberUids': FieldValue.arrayUnion([uid]),
+    });
+    await batch.commit();
   }
 
   static Future<void> leaveMasjid(String masjidId) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    await _db.collection('users').doc(uid).update({
+    final batch = _db.batch();
+    batch.update(_db.collection('users').doc(uid), {
       'joinedMasjidIds': FieldValue.arrayRemove([masjidId]),
+    });
+    batch.update(_masjids.doc(masjidId), {
+      'memberUids': FieldValue.arrayRemove([uid]),
+    });
+    await batch.commit();
+  }
+
+  /// Deletes an expired Masjid space (24h with zero muqtadis). The imam's
+  /// login account is untouched — their dashboard simply returns to
+  /// "Create your Masjid space" so they can start again.
+  static Future<void> deleteExpiredMasjid(Masjid masjid) async {
+    if (!masjid.isExpired) return;
+    await _masjids.doc(masjid.id).delete();
+    // Remove it from the imam's own joined list.
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    await _db.collection('users').doc(uid).update({
+      'joinedMasjidIds': FieldValue.arrayRemove([masjid.id]),
     });
   }
 
@@ -112,6 +142,8 @@ class MasjidService {
     required double lat,
     required double lng,
     required String imamName,
+    required int muqtadiMin,
+    required int muqtadiMax,
   }) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final masjid = Masjid(
@@ -124,13 +156,33 @@ class MasjidService {
       geohash: geohashEncode(lat, lng),
       imamUid: uid,
       imamName: imamName,
-      verified: false, // flipped manually by the app admin after verification
+      // Verified via silent community confirmation, not by an admin.
+      verified: false,
       timings: PrayerTimings.empty(),
+      muqtadiMin: muqtadiMin,
+      muqtadiMax: muqtadiMax,
+      verifyThreshold: verifyThresholdFor(muqtadiMin, muqtadiMax),
+      verifyDeadline: DateTime.now().add(const Duration(hours: 72)),
     );
     final ref = await _masjids.add(masjid.toMap());
     // The imam automatically joins their own masjid.
     await joinMasjid(ref.id);
     return ref.id;
+  }
+
+  /// A joined muqtadi confirms this Masjid is genuine. If the (hidden)
+  /// threshold is reached within the 72-hour window, the verified badge
+  /// is granted in the same write. Security rules enforce: one vote per
+  /// member, joined members only, threshold and deadline respected.
+  static Future<void> verifyMasjid(Masjid masjid) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    if (!masjid.canBeVerifiedBy(uid)) return;
+    final reachesThreshold =
+        masjid.verifierUids.length + 1 >= masjid.verifyThreshold;
+    await _masjids.doc(masjid.id).update({
+      'verifierUids': FieldValue.arrayUnion([uid]),
+      if (reachesThreshold) 'verified': true,
+    });
   }
 
   static Future<void> updateTimings(

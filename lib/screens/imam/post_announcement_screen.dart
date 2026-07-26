@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_lang.dart';
 import '../../models/models.dart';
 import '../../services/masjid_service.dart';
 
@@ -28,7 +29,7 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
     );
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Announcement broadcast ✓')));
+          SnackBar(content: Text(AppLang.t('broadcast_done'))));
       Navigator.pop(context);
     }
   }
@@ -36,25 +37,25 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Post announcement')),
+      appBar: AppBar(title: Text(AppLang.t('post_announcement'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Announcements are one-way broadcasts. Community members can read them but cannot reply.',
-            style: TextStyle(color: Colors.black54),
+          Text(
+            AppLang.t('announce_tip'),
+            style: const TextStyle(color: Colors.black54),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _title,
-            decoration: const InputDecoration(labelText: 'Title'),
+            decoration: InputDecoration(labelText: AppLang.t('title')),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _body,
             maxLines: 5,
-            decoration: const InputDecoration(
-                labelText: 'Message', alignLabelWithHint: true),
+            decoration: InputDecoration(
+                labelText: AppLang.t('message'), alignLabelWithHint: true),
           ),
           const SizedBox(height: 20),
           FilledButton(
@@ -65,7 +66,7 @@ class _PostAnnouncementScreenState extends State<PostAnnouncementScreen> {
                     width: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Text('Broadcast to community'),
+                : Text(AppLang.t('broadcast')),
           ),
         ],
       ),
